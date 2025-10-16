@@ -82,7 +82,7 @@ X_test[num_col] = scaler.transform(X_test[num_col])
 # X_train_scaled,X_test_scaled = Normalisation(X_train,X_test,num_col)
 
 
-from sklearn.feature_selection import SelectKBest, f_classif, f_regression
+from sklearn.feature_selection import SelectKBest, f_regression
 def selectKBest(X_train,X_test,y_train,k=5):
    selector = SelectKBest(score_func=f_regression, k=k)
    X_train_selected = selector.fit_transform(X_train, y_train)
@@ -93,15 +93,59 @@ def selectKBest(X_train,X_test,y_train,k=5):
 X_train_selected, X_test_selected, selected_cols = selectKBest(X_train, X_test, y_train, k=5)
 print("best Features sélectionnees :", selected_cols.tolist())
 
-def train_models(X_train,y_train):
-    models = {
-        'Logistic Regression': RandomForestRegressor(),
-        'Random Forest': SVR()
-    }
-    for name in models:
-        models[name].fit(X_train, y_train)
-    return models
+# def train_models(X_train,y_train):
+#     models = {
+#         'Logistic Regression': RandomForestRegressor(),
+#         'Random Forest': SVR()
+#     }
+#     for name in models:
+#         models[name].fit(X_train, y_train)
+#     return models
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import GridSearchCV
 
-from sklearn.feature_selection import f_regression
- 
+# Modèle 1 : RandomForestRegressor
 
+rfr = RandomForestRegressor(random_state=42)
+rfr_param = {
+   'n_estimators':[100,200],   #The number of trees in the forest.
+   'max_depth':[5,10,None]  #The maximum depth of the tree. If None, then nodes are expanded until all leaves are pure or until all leaves contain less than min_samples_split samples.
+}
+
+rfr_grid = GridSearchCV(rfr,param_grid=rfr_param,cv=5,scoring='neg_mean_absolute_error',n_jobs=-1,verbose=1)
+rfr_grid.fit(X_train_selected,y_train)
+
+## evaluation
+from sklearn.metrics import mean_absolute_error, r2_score 
+y_pred_rfr = rfr_grid.predict(X_test_selected)
+rfr_mae = mean_absolute_error(y_test,y_pred_rfr)
+rfr_r2 = r2_score(y_test,y_pred_rfr)
+
+print("RandomForestRegressor")
+print("Best params :", rfr_grid.best_params_)
+print("Best CV score (MAE):", -rfr_grid.best_score_)
+print("Test MAE:", rfr_mae)
+print("Test R²:", rfr_r2)
+print("-" * 40)
+
+# Modèle 2 : SVR
+
+svr = SVR()
+svr_param = {
+   'kernel': ['linear', 'rbf'],
+    'C': [0.1, 1, 10],
+    'gamma': ['scale', 'auto']
+}
+svr_grid = GridSearchCV(svr,param_grid=svr_param,cv=5,scoring='neg_mean_absolute_error',n_jobs=-1,verbose=1)
+svr_grid.fit(X_train_selected,y_train)
+## evaluation
+y_pred_svr = svr_grid.predict(X_test_selected)
+svr_mae = mean_absolute_error(y_test,y_pred_svr)
+svr_r2 = r2_score(y_test,y_pred_svr)
+
+print("SVR")
+print("Best params :", svr_grid.best_params_)
+print("Best CV score (MAE):", -svr_grid.best_score_)
+print("Test MAE:", svr_mae)
+print("Test R²:", svr_r2)
+print("-" * 40)
