@@ -18,7 +18,7 @@ from sklearn.svm import SVR
 from sklearn.metrics import accuracy_score, recall_score, f1_score
 from sklearn.pipeline import Pipeline 
 from sklearn.feature_selection import VarianceThreshold
-
+from sklearn.compose import ColumnTransformer
 #Fonctions de préparation des données'
 def load_data(path):
   dt =  pd.read_csv(f"{path}.csv")
@@ -122,7 +122,7 @@ rfr_mae = mean_absolute_error(y_test,y_pred_rfr)
 rfr_r2 = r2_score(y_test,y_pred_rfr)
 
 print("RandomForestRegressor")
-# print("Best params :", rfr_grid.best_params_)
+print("Best params :", rfr_grid.best_params_)
 print("Best CV score (MAE):", -rfr_grid.best_score_)
 print("Test MAE:", rfr_mae)
 print("Test R²:", rfr_r2)
@@ -132,9 +132,9 @@ print("-" * 40)
 
 svr = SVR()
 svr_param = {
-   'kernel': ['linear', 'rbf'],
-    'C': [0.1, 1, 10],
-    'gamma': ['scale', 'auto']
+   'kernel': ['linear', 'rbf'],  #Définit le type de fonction utilisée pour transformer les données afin de trouver une frontière optimale.
+    'C': [0.1, 1, 10], #Contrôle le niveau de pénalisation des erreurs.
+    'gamma': ['scale', 'auto'] #Contrôle l’influence d’un seul point de donnée sur la forme du modèle.
 }
 svr_grid = GridSearchCV(svr,param_grid=svr_param,cv=5,scoring='neg_mean_absolute_error',n_jobs=-1,verbose=1)
 svr_grid.fit(X_train_selected,y_train)
@@ -144,7 +144,7 @@ svr_mae = mean_absolute_error(y_test,y_pred_svr)
 svr_r2 = r2_score(y_test,y_pred_svr)
 
 print("SVR")
-# print("Best params :", svr_grid.best_params_)
+print("Best params :", svr_grid.best_params_)
 print("Best CV score (MAE):", -svr_grid.best_score_)  #MAE moyen pendant la validation croisée (découpé en 5 partie) C’est une estimation interne de la performance du modèle, obtenue pendant la recherche des meilleurs hyperparamètres.
 print("Test MAE:", svr_mae)#C’est la vraie erreur du modèle final sur de nouvelles données (performance réelle en production)./Tu fais une vraie prédiction sur des données jamais vues (X_test).
 print("Test R²:", svr_r2)
@@ -156,3 +156,53 @@ Exemple :
 RF : 0.369 → 0.337 → différence faible 
 SVR : 0.326 → 0.288 → très cohérent aussi 
 '''
+cat_col = data.select_dtypes(include=["object"]).columns
+
+
+
+preprocessor = ColumnTransformer(
+    transformers=[
+        ('num',StandardScaler(),num_col),
+        ('cat',OneHotEncoder(),cat_col),
+
+    ]
+)
+def run_pipline(model,param_grid,model_name):
+    pipeline = Pipeline(steps=[
+        ('preprocessing',preprocessor),
+        ('select',SelectKBest(score_func=f_regression,k=5)),
+        ('model',model)
+    ])
+
+    grid = GridSearchCV(
+        estimator=pipeline,
+        param_grid=param_grid,
+        scoring='neg_mean_absolute_error',
+        cv=5,
+        n_jobs=-1
+    )
+    grid.fit(X_train, y_train)
+    y_pred = grid.predict(X_test)
+
+    mae = mean_absolute_error(y_test, y_pred)
+    r2 = r2_score(y_test,y_pred)
+    print(f"\n****{model_name} Results ****")
+    print("Best params:", grid.best_params_)
+    print("Best CV MAE:", -grid.best_score_)
+    print("Test MAE:", mae)
+    print("Test R²:", r2)
+# RandomForestRegressor
+param_rf = {
+    'model__n_estimators': [100, 200],
+    'model__max_depth': [5, 10, None]
+}
+
+# SVR
+param_svr = {
+    'model__kernel': ['linear', 'rbf'],
+    'model__C': [0.1, 1, 10],
+    'model__gamma': ['scale', 'auto']
+}
+
+run_pipline(RandomForestRegressor(),param_rf,"RandomForestRegressor")
+run_pipline(SVR(),param_svr,"SVR")
