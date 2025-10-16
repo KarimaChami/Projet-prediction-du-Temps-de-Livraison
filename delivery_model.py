@@ -101,8 +101,7 @@ def train_models(X_train,y_train):
     for name in models:
         models[name].fit(X_train, y_train)
     return models
-   
-   
-from sklearn.feature_selection import f_regression
 
+from sklearn.feature_selection import f_regression
+ 
 
