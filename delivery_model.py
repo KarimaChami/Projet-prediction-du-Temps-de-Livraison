@@ -122,7 +122,7 @@ rfr_mae = mean_absolute_error(y_test,y_pred_rfr)
 rfr_r2 = r2_score(y_test,y_pred_rfr)
 
 print("RandomForestRegressor")
-print("Best params :", rfr_grid.best_params_)
+# print("Best params :", rfr_grid.best_params_)
 print("Best CV score (MAE):", -rfr_grid.best_score_)
 print("Test MAE:", rfr_mae)
 print("Test R²:", rfr_r2)
@@ -144,8 +144,15 @@ svr_mae = mean_absolute_error(y_test,y_pred_svr)
 svr_r2 = r2_score(y_test,y_pred_svr)
 
 print("SVR")
-print("Best params :", svr_grid.best_params_)
-print("Best CV score (MAE):", -svr_grid.best_score_)
-print("Test MAE:", svr_mae)
+# print("Best params :", svr_grid.best_params_)
+print("Best CV score (MAE):", -svr_grid.best_score_)  #MAE moyen pendant la validation croisée (découpé en 5 partie) C’est une estimation interne de la performance du modèle, obtenue pendant la recherche des meilleurs hyperparamètres.
+print("Test MAE:", svr_mae)#C’est la vraie erreur du modèle final sur de nouvelles données (performance réelle en production)./Tu fais une vraie prédiction sur des données jamais vues (X_test).
 print("Test R²:", svr_r2)
 print("-" * 40)
+
+'''
+Les scores CV et Test sont proches, donc pas de surapprentissage (overfitting).
+Exemple :
+RF : 0.369 → 0.337 → différence faible 
+SVR : 0.326 → 0.288 → très cohérent aussi 
+'''
