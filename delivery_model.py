@@ -9,9 +9,17 @@ from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.feature_selection import SelectKBest, f_regression
 
+# Chargement des données
 
-# Chargement & nettoyage des données
-data = pd.read_csv("data/dataset.csv").copy()
+def load_data():
+    return pd.read_csv("data/dataset.csv").copy()
+data=load_data()
+
+def split_data(df, target='Delivery_Time_min'):
+    X = df.drop(columns=target)
+    y = df[target]
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    return X_train, X_test, y_train, y_test
 
 # Remplir les valeurs manquantes
 data["Courier_Experience_yrs"] = data["Courier_Experience_yrs"].fillna(data["Courier_Experience_yrs"].mean())
@@ -22,19 +30,16 @@ for col in ['Weather', 'Traffic_Level', 'Time_of_Day']:
 data = data.drop(columns=['Order_ID', 'Vehicle_Type'])
 
 # Définir les colonnes
-
 num_col = ['Distance_km', 'Preparation_Time_min', 'Courier_Experience_yrs']
 cat_col = ['Weather', 'Traffic_Level', 'Time_of_Day']
 
 
-# Séparation X / y
-
+# Séparation X / y 
 X = data.drop(columns='Delivery_Time_min')
 y = data['Delivery_Time_min']
+X_train, X_test, y_train, y_test = split_data(data)
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-
+# Encodage 
 preprocessor = ColumnTransformer(
     transformers=[
         ('num', StandardScaler(), num_col),
@@ -62,13 +67,13 @@ def run_pipeline(model, param_grid, model_name,return_scores=False):
 
     mae = mean_absolute_error(y_test, y_pred)
     r2 = r2_score(y_test, y_pred)
-    minutes = int(mae)
-    seconds = int((mae - minutes) * 60)
+    min = int(mae)
+    sec = int((mae - min) * 60)
 
     print(f"\n**** {model_name} Results ****")
     print("Best params:", grid.best_params_)
     print(f"Best CV MAE: {-grid.best_score_:.3f}")
-    print(f"Test MAE: {mae:.3f} : {minutes} min {seconds} s d’erreur moyenne")
+    print(f"Test MAE: {mae:.3f} : {min} min {sec} s d’erreur moyenne")
     print(f"Test R²: {r2:.3f}")
 
     if return_scores:
