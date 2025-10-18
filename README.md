@@ -39,8 +39,14 @@ Le modèle choisi est la **SVR** car il offre :
 - Bonne généralisation 
 - Meilleure précision moyenne après optimisation des hyperparamètres 
 
+## Intégration Continue (CI)
+Dans le cadre de ce projet, j’ai mis en place un système d’intégration continue (CI) avec GitHub Actions pour :
+ - Exécuter automatiquement les tests unitaires à chaque push
+ - Vérifier la cohérence du pipeline et la performance du modèle
+ - Garantir la stabilité du projet avant tout déploiement
 
 ## Exécution du projet
 ### Installation des dépendances
-```bash
-pip install -r requirements.txt
+    ```bash
+    pip install -r requirements.txt
+
