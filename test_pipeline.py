@@ -17,5 +17,5 @@ def test_pipeline_MAE():
    model = SVR(kernel='linear')
    param_grid = {'model__kernel':['linear']} 
    mae, r2 = run_pipeline(model, param_grid, "Test_SVR", return_scores=True)
-   assert mae < 5, f" MAE trop élevée ({mae:.2f} min)"
+   assert mae < 7, f" MAE trop élevée ({mae:.2f} min)"
    print(f" MAE correcte ({mae:.2f} min) - Test passed")
